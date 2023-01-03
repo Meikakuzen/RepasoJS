@@ -1,7 +1,6 @@
 import './style.css'
 import javascriptLogo from './javascript.svg'
-import { promisesComponent } from './src/concepts/03-promesas'
-import { promiseRaceComponent } from './src/concepts/04-promise-race'
+import { generatorsAsyncComponent } from './src/concepts/10-generadoras-async'
 
 document.querySelector('#app').innerHTML = `
   <div>
@@ -24,4 +23,11 @@ const element = document.querySelector('.card')
 //environmentComponent(element)
 //callbacksComponent(element)
 //promisesComponent(element)
-promiseRaceComponent(element)
+//promiseRaceComponent(element)
+//asyncComponent(element)
+//asyncAwaitComponent(element)
+//asyncAwaitOptComponent(element)
+//forAwaitComponent(element)
+//generatorFunctionsComponent(element)
+generatorsAsyncComponent(element)
+

@@ -36,6 +36,7 @@ document.querySelector('#app').innerHTML = `
 
 ~~~
 
+----
 ## Variables de entorno
 
 - Vite ya viene con una forma de leer las variables de entorno, no hace falta instalar dotenv
@@ -96,6 +97,7 @@ export const environmentsComponent = (element)=>{
 }
 ~~~
 
+----
 ## Componente rápido para futuros ejercicios
 
 - Copio todo lo que hay en environments.js y lo pego en un archivo llamado src/concepts/demo.js
@@ -113,6 +115,7 @@ export const demoComponent = (element)=>{
 
 }
 ~~~
+----
 
 ## Callbacks
 
@@ -290,6 +293,8 @@ export const callbacksComponent = (element)=>{
 ~~~
 - Pero si el id no existe salta error
 
+----
+
 ## Manejo de errores
 
 - Para evaluar si el heroe existe puedo usar el ?
@@ -373,6 +378,7 @@ export const callbacksComponent = (element)=>{
 - Si está mal el id renderiza en pantalla heroe con id idfjpsodifjsdf no encontrado
 - Actualmente xisten otras alternativas para evitar esto, hacerlo ha sido por **motivos didácticos**
 
+----
 ## CallbackHell
 
 - CallbackHell es cuando hay callbacks que llaman a otros callbacks que internamente llaman a otros callbacks, etc
@@ -409,6 +415,7 @@ export const callbacksComponent = (element)=>{
 - Si necesitara un tercer heroe o un cuarto sería muy dificil de mantener
 - El uso de callbacks es bastante generalizado, pero se está moviendo al uso de promesas
 
+----
 # PROMESAS
 
 - Copio el demo.js y lo renombro a promesas
@@ -468,6 +475,7 @@ const findHero = (id)=>{
 }
 ~~~
 
+----
 ## Utilizar una promesa
 
 - Escribo una función dentro de promiseComponent para renderizar el nombre del heroe
@@ -547,6 +555,7 @@ export const promisesComponent = (element)=>{
 
 }
 ~~~
+----
 
 ## Promise Hell
 
