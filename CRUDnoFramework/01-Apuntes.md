@@ -185,6 +185,297 @@ const loadNextPage = async ()=>{
 
 - Para cammbiar los nombres de las propiedades del objeto de la base de datos
 - Para ello creo /models/user.js
+- La idea de este user va a ser el objeto de usuario que voy a manejar en la app
+- Podría ser como una representación del usuario en la base de datos
+- Es la data que necesito para trabajar, no como viene en el backend
+- La idea es que el constructor reciba la data tal y como la estoy esperando
+- Desestructuro las propiedades 
+
+~~~js
+
+/**
+ * @param {Like<User>} userDataLike   //le pongo Like User porque es algo que luce como un usuario, no tiene porque ser un usuario
+ */
+
+export class User {
+
+    constructor({avatar, balance, firstName, gender, id, isActive, lastName}){
+      this.avatar = avatar 
+      this.balance = balance
+      this.firstName = firstName
+      this.gender= gender
+      this.id = id
+      this.isActive = isActive 
+      this.lastName = lastName
+    }
+}
+~~~
+
+- Quiero cambiar el snake_case por camelCase en first_name y last_name. Si lo hago directamente no va a hacer match con el objeto
+- Para ello se introduce el concepto de un **mapper**
+- Es un ente intermedio para saber como viene la data de mi backend y generar una instancia basado en lo que yo necesito
+
+-----
+
+## Mappers
+
+- Creo el archivo src/users/mappers/localhost-user.mapper.js
+
+~~~js
+import { User } from "../models/user"
+
+
+
+export const localhostUserToModel = (localhostUser)=>{
+
+
+    return new User()
+}
+~~~
+
+- En el cuerpo de la función desestructuro cada una de las propiedades que viene en el objeto
+- En la nueva instancia de User hago el cambio de snakeCase a camelCase de first_name y last_name
+
+~~~js
+/**
+ * 
+ * @param {Like<User>} localhostUser 
+ * @returns {User}
+ */
+
+export const localhostUserToModel = (localhostUser)=>{
+
+    const {avatar, balance, first_name, gender, id, isActive, last_name} = localhostUser
+
+
+    return new User({
+        avatar, 
+        balance, 
+        firstName: first_name, 
+        gender, 
+        id, 
+        isActive, 
+        lastName: last_name
+    })
+}
+~~~
+
+- Esto es un mapper. Una función que recibe el objeto o algo que luzca cómo ese objeto (User) y genera una instancia
+- ¿Cómo usar el mapper?
+- Voy a loadUserByPage que es donde tengo la data del fetch (es un arreglo) y la mapeo guardándolo en users.
+- Esta función se llama en loadNextPage() que es llamada en usersApp
+- Ahora si hago un console.log aparece firstName y lastName en consola
+
+~~~js
+export const loadUsersByPage = async (page= 1)=>{
+    const url = `${import.meta.env.VITE_BASE_URL}/users?_page=2`
+
+    const res = await fetch(url)
+    const data = await res.json()
+
+    const users = data.map(userLike => localhostUserToModel( userLike )) //al ser el único argumento igual que el parámetro, 
+    console.log(users)                                                            //puedo dejar sólo la referencia a la función
+}
+~~~
+
+- Esta función va a regresar una promesa (por eso el async) con un arreglo de User
+- Importo User para que no de error con la documentación
+
+~~~js
+import { localhostUserToModel } from "../mappers/localhost-user.mapper"
+import { User } from "../models/user"
+
+/**
+ * 
+ * @param {Number} page
+ * @returns {Promise <User[]>}
+ */
+
+export const loadUsersByPage = async (page= 1)=>{
+    const url = `${import.meta.env.VITE_BASE_URL}/users?_page=2`
+
+    const res = await fetch(url)
+    const data = await res.json()
+
+    const users = data.map(userLike => localhostUserToModel( userLike )) //al ser el único argumento igual que el parámetro, 
+    
+    return users//puedo dejar sólo la referencia a la función
+}
+~~~
+----
+
+
+## Actualizar el Store
+
+- Este loadUsersByPage no actualiza el state
+- Del state es de dónde quiero tomar la data
+- En loadNextPage solo voy a cambiar el current page si hay usuarios en la respuesta
+- Si voy a la página 20 y no hay usuarios no voy a ir a la 21
+- Si si los hay, le sumo 1
+- Actualizo el state de users con el resultado de la promesa
+
+~~~js
+const loadNextPage = async ()=>{
+    const users = await loadUsersByPage(state.currentPage+1)
+    if(users.length === 0) return;
+
+    state.currentPage += 1
+    state.users = users
+}
+~~~
+
+- Ahora, desde cualquier lado de mi app yo puedo hacer un console.log(usersStore.getUsers()) y tengo la info 
+----
+
+# Crear una tabla HTML con los usuarios
+
+- Creo en src/presentation/render-table/render-table.css y render-table.js
+- Voy a crear una tabla HTML, pero como quiero guardar esta tabla en memoria, declaro la variable fuera del cuerpo de la función
+- Solo las funciones que estén en este módulo van a poder acceder a ella
+
+~~~js
+import usersStore from '../../store/users-store';
+import './render-table.css';
+
+let table;
+
+export const RenderTable = (element)=>{
+
+    const users = usersStore.getUsers()
+
+}
+~~~
+
+- Si no hay tabla la creo con la función 
+- Porqué append? Porque no quiero destruir nada de lo que ya haya creado
+
+~~~js
+import usersStore from '../../store/users-store';
+import './render-table.css';
+
+let table;
+
+const createTable = ()=>{
+    const table = document.createElement('table')
+    const tableHeaders= document.createElement('thead')
+    tableHeaders.innerHTML=`
+        <tr>
+            <th>#ID</th>
+            <th>Balance</th>
+            <th>FirstName</th>
+            <th>LastName</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    `
+    const tableBody = document.createElement('tbody')
+
+    table.append(tableHeaders, tableBody)
+    return table;
+}
+
+
+
+export const RenderTable = (element)=>{
+
+    const users = usersStore.getUsers()
+
+    if(!table){
+        table = createTable()
+        element.append(table)
+
+        //TODO: listeners
+    }
+}
+~~~
+
+- Coloco la función de RenderTable en UsersApp
+- RenderTable va con mayúsculas porque es un componente
+- Ya no necesito el Loading, lo borro
+
+~~~js
+export const UsersApp = async(element)=>{
+    element.innerHTML = 'Loading...'
+    await usersStore.loadNextPage()
+    element.innerHTML=""
+    RenderTable(element)
+}
+~~~
+
+- Por cierto, también se pueden documentar los objetos para que la ayuda sea mejor
+- En el store:
+
+~~~js
+export default {
+    loadNextPage,
+    loadPreviousPage,
+    onUserChanged,
+    reloadPage,
+
+    /**
+     * 
+     * @returns {User[]}
+     */
+    getUsers: ()=> [...state.users],
+    /**
+     * 
+     * @returns {Number}
+     */
+    getCurrentPage: ()=> state.currentPage
+}
+~~~
+
+- Mapeo el user con un forEach
+- Selecciono el tbody con un querySelector sobre el table y le concateno el tableHTML 
+
+
+~~~js
+
+export const RenderTable = (element)=>{
+
+    const users = usersStore.getUsers()
+
+    if(!table){
+        table = createTable()
+        element.append(table)
+
+        //TODO: listeners
+    }
+
+    let tableHTML =''
+
+    users.forEach(user =>{
+        tableHTML +=`   
+            <tr>
+                <td>${user.id}</td>
+                <td>${user.balance}</td>
+                <td>${user.firstName}</td>
+                <td>${user.lastName}</td>
+                <td>${user.isActive}</td>
+                <td>
+                    <a href="#/" data-id="${user.id}">Select</a>
+                    |
+                    <a href="#/" data-id="${user.id}">Delete</a>
+                    
+                </td>
+            </tr>
+        `
+    })
+
+    table.querySelector('tbody').innerHTML = tableHTML
+}
+~~~
+
+----
+
+## Botones Next, Prev y página actual
+
+
+
+
+
+
+
 
 
 
